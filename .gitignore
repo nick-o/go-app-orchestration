@@ -1,1 +1,6 @@
+# don't upload our secrets to github
 secrets.tfvars
+
+# tfstate files might contain secrets, don't upload either
+# also, we're storing remote state in S3
+terraform.tfstate*
