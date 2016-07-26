@@ -5,6 +5,10 @@ variable "aws_region" {
   default = "eu-west-1"
 }
 
+variable "keyfile" {
+  default = "~/.ssh/id_rsa.pub"
+}
+
 variable "networking" {
   type    = "map"
   default = {
