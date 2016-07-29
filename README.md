@@ -40,12 +40,58 @@ git clone https://github.com/nick-o/go-app-orchestration.git
 
 Run terraform plan to see an execution plan before you apply any changes. If you set up the secrets.tfvars file like described above, you can use this command:
 ```
-terraform plan -var-file secrets.tfvars
+$ terraform plan -var-file secrets.tfvars
+Refreshing Terraform state prior to plan...
+
+
+The Terraform execution plan has been generated and is shown below.
+Resources are shown in alphabetical order for quick scanning. Green resources
+will be created (or destroyed and then created if an existing resource
+exists), yellow resources are being changed in-place, and red resources
+will be destroyed.
+
+Note: You didn't specify an "-out" parameter to save this plan, so when
+"apply" is called, Terraform can't guarantee this is what will execute.
+
++ aws_instance.app.0
+    ami:                      "" => "ami-a6a62cd5"
+    availability_zone:        "" => "<computed>"
+    ebs_block_device.#:       "" => "<computed>"
+    ephemeral_block_device.#: "" => "<computed>"
+    instance_state:           "" => "<computed>"
+    instance_type:            "" => "t2.micro"
+...
 ```
 
 If you're happy with the proposed changes, apply them with:
 ```
-terraform plan -var-file secrets.tfvars
+$ terraform apply -var-file secrets.tfvars
+aws_instance.web: Creation complete
+
+Apply complete! Resources: 14 added, 0 changed, 0 destroyed.
+
+The state of your infrastructure has been saved to the path
+below. This state is required to modify and destroy your
+infrastructure, so keep it safe. To inspect the complete state
+use the `terraform show` command.
+
+State path: .terraform/terraform.tfstate
+
+Outputs:
+
+  web_public_ip = 54.194.128.50
+```
+
+You can verify the functionality via curl:
+```
+$ curl 54.194.128.50
+Hi there, I'm served from app-02!
+$ curl 54.194.128.50
+Hi there, I'm served from app-01!
+$ curl 54.194.128.50
+Hi there, I'm served from app-02!
+$ curl 54.194.128.50
+Hi there, I'm served from app-01!
 ```
 
 # Considerations
