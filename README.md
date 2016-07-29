@@ -38,6 +38,12 @@ Clone this repository:
 git clone https://github.com/nick-o/go-app-orchestration.git
 ```
 
+Install the required terraform module via:
+```
+$ terraform get
+Get: git::https://github.com/terraform-community-modules/tf_aws_ubuntu_ami.git
+```
+
 Run terraform plan to see an execution plan before you apply any changes. If you set up the secrets.tfvars file like described above, you can use this command:
 ```
 $ terraform plan -var-file secrets.tfvars
