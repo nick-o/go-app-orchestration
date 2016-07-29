@@ -84,10 +84,10 @@ resource "aws_security_group" "app" {
     to_port         = 8484
     protocol        = "tcp"
     security_groups = ["${aws_security_group.web.id}"]
-    tags {
-      Name = "app_sg"
-      managed_by = "terraform"
-    }
+  }
+  tags {
+    Name = "app_sg"
+    managed_by = "terraform"
   }
 }
 
@@ -96,10 +96,6 @@ resource "aws_security_group" "app" {
 resource "aws_key_pair" "ssh_keypair" {
   key_name = "ssh_key"
   public_key = "${file(lookup(var.keyfile, "public"))}"
-  tags {
-    Name = "goapp_keypair"
-    managed_by = "terraform"
-  }
 }
 
 # Create two app instances and provision them with chef recipes:
