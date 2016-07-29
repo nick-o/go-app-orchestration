@@ -18,3 +18,13 @@ variable "networking" {
     az_list                  = "eu-west-1a,eu-west-1b,eu-west-1c"
   }
 }
+
+variable "machine_image" {
+  type    = "map"
+  default = {
+    distribution = "trusty"
+    architecture = "amd64"
+    virttype     = "hvm"
+    storagetype  = "ebs-ssd"
+  }
+}
