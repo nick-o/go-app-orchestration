@@ -68,6 +68,10 @@ resource "aws_security_group" "web" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  tags {
+    Name = "web_sg"
+    managed_by = "terraform"
+  }
 }
 
 # security group for the app server, allow inbound access on TCP port 8484 from web server(s)
@@ -80,6 +84,10 @@ resource "aws_security_group" "app" {
     to_port         = 8484
     protocol        = "tcp"
     security_groups = ["${aws_security_group.web.id}"]
+    tags {
+      Name = "app_sg"
+      managed_by = "terraform"
+    }
   }
 }
 
@@ -87,9 +95,16 @@ resource "aws_security_group" "app" {
 # alternatively this could be skipped and we could use an existing keypair
 resource "aws_key_pair" "ssh_keypair" {
   key_name = "ssh_key"
-  public_key = "${file(var.keyfile)}"
+  public_key = "${file(lookup(var.keyfile, "public"))}"
+  tags {
+    Name = "goapp_keypair"
+    managed_by = "terraform"
+  }
 }
 
+# Create two app instances and provision them with chef recipes:
+#   - recipe[go-app-configmanagement::default]
+#   - recipe[go-app-configmanagement::go_app]
 resource "aws_instance" "app" {
   count                  = 2
   ami                    = "${module.ami.ami_id}"
@@ -104,17 +119,22 @@ resource "aws_instance" "app" {
   }
 
   provisioner "chef" {
-    run_list = ["go-app-configmanagement::default","go-app-configmanagement::go-app"]
-    node_name = "${format("app_%02d",count.index + 1)}"
-    server_url = "https://api.chef.io/organizations/nick-chef"
-    validation_client_name = "nick-chef-validator"
-    validation_key = "${file("../.chef/nick-chef-validator.pem")}"
+    run_list               = ["go-app-configmanagement::default","go-app-configmanagement::go_app"]
+    node_name              = "${format("app_%02d",count.index + 1)}"
+    server_url             = "${var.chef_server_url}"
+    validation_client_name = "${var.chef_validator_name}"
+    validation_key         = "${file(var.chef_validator_file)}"
     connection {
-      user = "ubuntu"
-      private_key = "${file("~/.ssh/id_rsa")}"
+      user        = "ubuntu"
+      private_key = "${file(lookup(var.keyfile, "private"))}"
     }
   }
 }
+
+# Create one web instance once both app instances have been completely provisioned and
+# provision it with chef recipes:
+#   - recipe[go-app-configmanagement::default]
+#   - recipe[go-app-configmanagement::web]
 resource "aws_instance" "web" {
   depends_on             = ["aws_instance.app"]
   ami                    = "${module.ami.ami_id}"
@@ -129,14 +149,14 @@ resource "aws_instance" "web" {
   }
 
   provisioner "chef" {
-    run_list = ["go-app-configmanagement::default","go-app-configmanagement::nginx"]
-    node_name = "web"
-    server_url = "https://api.chef.io/organizations/nick-chef"
-    validation_client_name = "nick-chef-validator"
-    validation_key = "${file("../.chef/nick-chef-validator.pem")}"
+    run_list               = ["go-app-configmanagement::default","go-app-configmanagement::nginx"]
+    node_name              = "web"
+    server_url             = "${var.chef_server_url}"
+    validation_client_name = "${var.chef_validator_name}"
+    validation_key         = "${file(var.chef_validator_file)}"
     connection {
       user = "ubuntu"
-      private_key = "${file("~/.ssh/id_rsa")}"
+      private_key = "${file(lookup(var.keyfile, "private"))}"
     }
   }
 }
